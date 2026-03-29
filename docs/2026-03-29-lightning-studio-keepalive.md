@@ -21,6 +21,10 @@ The free Lightning Studio backing the NemoClaw VM can drift asleep after about 1
   - new workflow
   - runs every 10 minutes
   - calls the Studio heal path so the free Studio does not stay asleep
+- all workflow helper actions were upgraded to the Node 24-capable releases:
+  - `actions/checkout@v6`
+  - `actions/setup-python@v6`
+  - `actions/upload-artifact@v6`
 
 ### Runtime Code
 
