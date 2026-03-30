@@ -12,6 +12,7 @@ concurrency:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
@@ -19,23 +20,32 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          cat > ~/.ssh/lightning_vm_key <<'EOF'
-          ${{ secrets.LIGHTNING_VM_SSH_KEY }}
-          EOF
+          printf '%s\n' '${{ secrets.LIGHTNING_VM_SSH_KEY }}' > ~/.ssh/lightning_vm_key
           chmod 600 ~/.ssh/lightning_vm_key
+          ssh-keyscan -H ssh.lightning.ai >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Install or refresh VM keepalive service
         env:
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
-          LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
         run: |
+          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
           bash scripts/bootstrap_vm_keepalive.sh
 
-      - name: Capture keepalive snapshot
+      - name: Pulse VM activity and self-repair
         env:
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
-          LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
         run: |
+          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
+          bash scripts/pulse_vm_keepalive.sh > vm-keepalive-snapshot.json
+          cat vm-keepalive-snapshot.json
+
+      - name: Capture keepalive snapshot
+        if: failure()
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
           bash scripts/fetch_vm_snapshot.sh > vm-keepalive-snapshot.json
           cat vm-keepalive-snapshot.json
 
