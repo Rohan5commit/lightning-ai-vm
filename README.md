@@ -12,3 +12,7 @@ This handoff repo only records what was changed, how it works, and what to run/c
 Current handoff:
 
 - [docs/2026-03-29-lightning-studio-keepalive.md](docs/2026-03-29-lightning-studio-keepalive.md)
+
+Latest note:
+
+- the keepalive path was hardened so GitHub now sends an active pulse every 5 minutes and runs a NemoClaw resume hook after a Studio wake
