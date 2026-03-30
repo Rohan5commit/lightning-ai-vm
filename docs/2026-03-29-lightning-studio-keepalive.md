@@ -9,11 +9,11 @@ The free Lightning Studio backing the NemoClaw VM can drift asleep after about 1
 Historical note:
 - this document originally referred to `Rohan5commit/train-once-quant-platform`
 - that was later corrected
-- the current source of truth for VM automation is `Rohan5commit/train-once-quant-platform-handoff`
+- the current source of truth for VM automation is `Rohan5commit/lightning-ai-vm`
 
 ## Source Repo
 
-- Repo: `Rohan5commit/train-once-quant-platform-handoff`
+- Repo: `Rohan5commit/lightning-ai-vm`
 
 ## What Changed
 

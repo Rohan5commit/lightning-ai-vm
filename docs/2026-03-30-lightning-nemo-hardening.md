@@ -2,7 +2,7 @@
 
 ### Historical repo note
 - The March 30 keepalive worker change was first pushed to `Rohan5commit/train-once-quant-platform` by mistake.
-- That mistake was corrected later the same day by reverting that repo and moving VM automation ownership into `Rohan5commit/train-once-quant-platform-handoff`.
+- That mistake was corrected later the same day by reverting that repo and moving VM automation ownership into `Rohan5commit/lightning-ai-vm`.
 
 ### What changed
 - Hardened `lightning-studio-keepalive.yml` from a one-shot pulse into a long-lived keepalive worker.
