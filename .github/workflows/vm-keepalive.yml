@@ -1,0 +1,48 @@
+name: VM Keepalive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: handoff-vm-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          cat > ~/.ssh/lightning_vm_key <<'EOF'
+          ${{ secrets.LIGHTNING_VM_SSH_KEY }}
+          EOF
+          chmod 600 ~/.ssh/lightning_vm_key
+
+      - name: Install or refresh VM keepalive service
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
+        run: |
+          bash scripts/bootstrap_vm_keepalive.sh
+
+      - name: Capture keepalive snapshot
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
+        run: |
+          bash scripts/fetch_vm_snapshot.sh > vm-keepalive-snapshot.json
+          cat vm-keepalive-snapshot.json
+
+      - name: Upload keepalive snapshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: vm-keepalive-snapshot
+          path: vm-keepalive-snapshot.json
+          if-no-files-found: warn

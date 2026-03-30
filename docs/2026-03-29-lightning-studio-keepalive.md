@@ -4,11 +4,16 @@ Date: `2026-03-29T10:44:40Z`
 
 ## Purpose
 
-The free Lightning Studio backing the NemoClaw VM can drift asleep after about 10 minutes of inactivity. The first keepalive implementation only maintained a detached heartbeat session, which could still look healthy in GitHub Actions while the Studio later idled out. The runtime repo now uses an active keepalive pulse plus a resume hook so GitHub Actions can wake the Studio and bring NemoClaw services back automatically.
+The free Lightning Studio backing the NemoClaw VM can drift asleep after about 10 minutes of inactivity. The first keepalive implementation only maintained a detached heartbeat session, which could still look healthy in GitHub Actions while the Studio later idled out.
 
-## Runtime Repo
+Historical note:
+- this document originally referred to `Rohan5commit/train-once-quant-platform`
+- that was later corrected
+- the current source of truth for VM automation is `Rohan5commit/train-once-quant-platform-handoff`
 
-- Repo: `Rohan5commit/train-once-quant-platform`
+## Source Repo
+
+- Repo: `Rohan5commit/train-once-quant-platform-handoff`
 
 ## What Changed
 
@@ -63,5 +68,5 @@ The free Lightning Studio backing the NemoClaw VM can drift asleep after about 1
 
 ## Notes
 
-- This handoff repo is documentation-only by design.
-- The runtime repo is the only repo that should contain executable automation for the Lightning Studio keepalive path.
+- This document is historical context only.
+- The current executable VM automation now lives in this handoff repo.

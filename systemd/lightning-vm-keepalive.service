@@ -1,0 +1,17 @@
+[Unit]
+Description=NemoClaw VM keepalive loop
+After=network-online.target
+
+[Service]
+Type=simple
+User=rohansanthoshkumar
+WorkingDirectory=/opt/nemoclaw-vm-automation
+Environment=KEEPALIVE_DIR=/teamspace/studios/this_studio/.lightning-checkpoints/nemoclaw-vm-keepalive
+Environment=INTERVAL_SECONDS=240
+Environment=NEMOCLAW_DIR=/home/zeus/content/workspace/NemoClaw
+ExecStart=/opt/nemoclaw-vm-automation/vm_keepalive_loop.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

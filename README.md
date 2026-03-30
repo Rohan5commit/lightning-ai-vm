@@ -1,18 +1,21 @@
 # Train-Once Quant Platform Handoff
 
-This repo is the handoff companion to the runtime repo:
+This repo is the source of truth for VM-specific automation around the active NemoClaw Lightning Studio.
 
-- Runtime repo: `Rohan5commit/train-once-quant-platform`
-- Handoff repo: `Rohan5commit/train-once-quant-platform-handoff`
+It now owns:
+- the GitHub Actions keepalive workflow for the VM
+- the 4-hour VM snapshot workflow
+- the SSH/bootstrap scripts used to keep the VM awake and verify health
+- the operational handoff notes for the VM
 
-The runtime repo owns the Lightning Studio automation, GitHub Actions workflows, and the keepalive code.
+It does not own:
+- the unrelated `Rohan5commit/train-once-quant-platform` project
 
-This handoff repo only records what was changed, how it works, and what to run/check next.
+Current automation:
+- [.github/workflows/vm-keepalive.yml](.github/workflows/vm-keepalive.yml)
+- [.github/workflows/vm-snapshot.yml](.github/workflows/vm-snapshot.yml)
 
-Current handoff:
-
+Current docs:
 - [docs/2026-03-29-lightning-studio-keepalive.md](docs/2026-03-29-lightning-studio-keepalive.md)
-
-Latest note:
-
-- the keepalive path was hardened so GitHub now sends an active pulse every 5 minutes and runs a NemoClaw resume hook after a Studio wake
+- [docs/2026-03-30-lightning-nemo-hardening.md](docs/2026-03-30-lightning-nemo-hardening.md)
+- [docs/2026-03-30-vm-repo-correction.md](docs/2026-03-30-vm-repo-correction.md)

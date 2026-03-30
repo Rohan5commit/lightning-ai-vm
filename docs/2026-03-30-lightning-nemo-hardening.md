@@ -1,8 +1,8 @@
 ## 2026-03-30 Lightning + Nemo Hardening
 
-### Runtime repo
-- Repo: `Rohan5commit/train-once-quant-platform`
-- Commit: `2b3c2d9`
+### Historical repo note
+- The March 30 keepalive worker change was first pushed to `Rohan5commit/train-once-quant-platform` by mistake.
+- That mistake was corrected later the same day by reverting that repo and moving VM automation ownership into `Rohan5commit/train-once-quant-platform-handoff`.
 
 ### What changed
 - Hardened `lightning-studio-keepalive.yml` from a one-shot pulse into a long-lived keepalive worker.

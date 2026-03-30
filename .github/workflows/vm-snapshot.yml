@@ -1,0 +1,42 @@
+name: VM Snapshot
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: handoff-vm-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          cat > ~/.ssh/lightning_vm_key <<'EOF'
+          ${{ secrets.LIGHTNING_VM_SSH_KEY }}
+          EOF
+          chmod 600 ~/.ssh/lightning_vm_key
+
+      - name: Capture VM snapshot
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
+        run: |
+          bash scripts/bootstrap_vm_keepalive.sh
+          bash scripts/fetch_vm_snapshot.sh > vm-snapshot.json
+          cat vm-snapshot.json
+
+      - name: Upload VM snapshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: vm-snapshot
+          path: vm-snapshot.json
+          if-no-files-found: warn
