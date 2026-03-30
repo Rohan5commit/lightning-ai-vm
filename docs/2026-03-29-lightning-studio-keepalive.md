@@ -41,6 +41,7 @@ The free Lightning Studio backing the NemoClaw VM can drift asleep after about 1
 - `src/lightning_studio_utils.py`
   - fixes the Studio config to use `disable_auto_shutdown=True`
   - adds keepalive pulse config, pulse session naming, and the resume hook command builder
+  - the keepalive pulse is now inline, so it still works even if the Studio repo checkout has not refreshed to the newest helper script yet
 - `configs/lightning_run.yaml`
   - enables keepalive and sets the interval to 240 seconds
   - enables the keepalive pulse
