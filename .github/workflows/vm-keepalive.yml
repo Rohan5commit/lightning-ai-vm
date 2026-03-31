@@ -12,11 +12,31 @@ concurrency:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Lightning API client
+        run: |
+          python -m pip install --upgrade pip
+          pip install lightning-app PyYAML
+
+      - name: Wake or heal the Lightning Studio
+        env:
+          LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
+          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          python scripts/lightning_vm_heal.py --restart-if-needed --out vm-keepalive-status.json
+          cat vm-keepalive-status.json
+
       - name: Configure SSH key
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -25,28 +45,19 @@ jobs:
           ssh-keyscan -H ssh.lightning.ai >> ~/.ssh/known_hosts 2>/dev/null || true
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Install or refresh VM keepalive service
+      - name: Refresh VM service and capture remote snapshot
         env:
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
         run: |
           export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
           bash scripts/bootstrap_vm_keepalive.sh
-
-      - name: Pulse VM activity and self-repair
-        env:
-          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
-        run: |
-          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
-          bash scripts/pulse_vm_keepalive.sh > vm-keepalive-snapshot.json
+          bash scripts/fetch_vm_snapshot.sh > vm-keepalive-snapshot.json
           cat vm-keepalive-snapshot.json
 
       - name: Capture keepalive snapshot
         if: failure()
-        env:
-          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
         run: |
-          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
-          bash scripts/fetch_vm_snapshot.sh > vm-keepalive-snapshot.json
+          cp vm-keepalive-status.json vm-keepalive-snapshot.json
           cat vm-keepalive-snapshot.json
 
       - name: Upload keepalive snapshot
