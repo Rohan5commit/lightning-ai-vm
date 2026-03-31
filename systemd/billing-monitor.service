@@ -6,7 +6,8 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/nemoclaw-billing-monitor.env
-ExecStart=/opt/nemoclaw-vm-automation/billing-venv/bin/python /opt/nemoclaw-vm-automation/billing_monitor.py
+Environment=PYTHONPATH=/opt/nemoclaw-vm-automation/vendor
+ExecStart=/usr/bin/python3 /opt/nemoclaw-vm-automation/billing_monitor.py
 WorkingDirectory=/opt/nemoclaw-vm-automation
 User=root
 Group=root
