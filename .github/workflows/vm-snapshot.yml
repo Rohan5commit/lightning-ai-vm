@@ -32,7 +32,11 @@ jobs:
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
         run: |
           python scripts/lightning_vm_heal.py --restart-if-needed --out vm-snapshot-status.json
-          cat vm-snapshot-status.json
+          python - <<'PY'
+          import json
+          data = json.load(open("vm-snapshot-status.json"))
+          print(f"studio_id={data['studio_id']} action={data['action']} phase={data['instance_phase']}")
+          PY
 
       - name: Configure SSH key
         env:
@@ -52,13 +56,21 @@ jobs:
           export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
           bash scripts/bootstrap_vm_keepalive.sh
           bash scripts/fetch_vm_snapshot.sh > vm-snapshot.json
-          cat vm-snapshot.json
+          python - <<'PY'
+          import json
+          data = json.load(open("vm-snapshot.json"))
+          print(f"keepalive_active={data['keepalive_service']['active']} health_ok={data['nemoclaw_health'].get('ok')} needs_recovery={data['nemoclaw_health'].get('needs_recovery')}")
+          PY
 
       - name: Capture API status only
         if: failure()
         run: |
           cp vm-snapshot-status.json vm-snapshot.json
-          cat vm-snapshot.json
+          python - <<'PY'
+          import json
+          data = json.load(open("vm-snapshot.json"))
+          print(json.dumps(data, indent=2))
+          PY
 
       - name: Upload VM snapshot
         if: always()

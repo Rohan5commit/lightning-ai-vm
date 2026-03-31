@@ -1,4 +1,4 @@
-# Train-Once Quant Platform Handoff
+# Lightning AI VM
 
 This repo is the source of truth for VM-specific automation around the active NemoClaw Lightning Studio.
 

@@ -31,7 +31,6 @@ class HealReport:
     studio_found: bool
     instance_found: bool
     instance_phase: str
-    ssh_target: str
 
 
 def request_json(url: str, *, method: str = "GET", headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -171,7 +170,6 @@ def main() -> None:
             studio_found=studio is not None,
             instance_found=instance is not None,
             instance_phase=phase or "unknown",
-            ssh_target=target,
         )
     )
     text = json.dumps(payload, indent=2)

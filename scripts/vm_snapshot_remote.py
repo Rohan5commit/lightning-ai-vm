@@ -36,8 +36,23 @@ def http_json(url: str):
 base = Path("/teamspace/studios/this_studio/.lightning-checkpoints/nemoclaw-vm-keepalive")
 payload = {
     "captured_at": datetime.now(timezone.utc).isoformat(),
-    "keepalive_service": run(["systemctl", "is-active", "lightning-vm-keepalive.service"]),
-    "keepalive_heartbeat": slurp_json(base / "heartbeat.json"),
-    "nemoclaw_health": http_json("http://127.0.0.1:38080/healthz"),
+    "keepalive_service": {
+        "active": run(["systemctl", "is-active", "lightning-vm-keepalive.service"]).get("stdout") == "active",
+    },
+    "keepalive_heartbeat": {
+        "timestamp": (slurp_json(base / "heartbeat.json") or {}).get("timestamp"),
+        "source": (slurp_json(base / "heartbeat.json") or {}).get("source"),
+    },
 }
+health = http_json("http://127.0.0.1:38080/healthz")
+if "error" in health:
+    payload["nemoclaw_health"] = {"ok": False, "error": health["error"]}
+else:
+    payload["nemoclaw_health"] = {
+        "ok": bool(health.get("ok")),
+        "polling_enabled": bool(health.get("polling_enabled")),
+        "needs_recovery": bool(health.get("needs_recovery")),
+        "last_slack_api_ok_at": health.get("last_slack_api_ok_at"),
+        "last_poll_error": health.get("last_poll_error"),
+    }
 print(json.dumps(payload, indent=2))
