@@ -78,8 +78,9 @@ ssh_retry "
     if [ ! -x '$REMOTE_INSTALL_DIR/billing-venv/bin/python' ]; then
       sudo python3 -m venv '$REMOTE_INSTALL_DIR/billing-venv'
     fi
-    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/pip' install --upgrade pip >/dev/null
-    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/pip' install oci >/dev/null
+    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/python' -m ensurepip --upgrade >/dev/null 2>&1 || true
+    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/python' -m pip install --upgrade pip >/dev/null
+    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/python' -m pip install oci >/dev/null
   fi
   sudo systemctl daemon-reload
   sudo systemctl enable --now lightning-vm-keepalive.service
