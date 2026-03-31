@@ -1,0 +1,16 @@
+[Unit]
+Description=Serve cloud billing board
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server 38120 --bind 127.0.0.1 --directory /var/lib/nemoclaw-billing/www
+WorkingDirectory=/var/lib/nemoclaw-billing/www
+Restart=always
+RestartSec=5
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

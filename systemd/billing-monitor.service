@@ -1,0 +1,12 @@
+[Unit]
+Description=Cloud billing monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/nemoclaw-billing-monitor.env
+ExecStart=/opt/nemoclaw-vm-automation/billing-venv/bin/python /opt/nemoclaw-vm-automation/billing_monitor.py
+WorkingDirectory=/opt/nemoclaw-vm-automation
+User=root
+Group=root

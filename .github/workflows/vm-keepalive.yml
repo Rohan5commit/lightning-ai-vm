@@ -52,6 +52,20 @@ jobs:
       - name: Refresh VM service and capture remote snapshot
         env:
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          BILLING_ALERT_THRESHOLD: ${{ vars.BILLING_ALERT_THRESHOLD }}
+          BILLING_SMTP_HOST: ${{ vars.BILLING_SMTP_HOST }}
+          BILLING_SMTP_PORT: ${{ vars.BILLING_SMTP_PORT }}
+          BILLING_SMTP_USERNAME: ${{ secrets.BILLING_SMTP_USERNAME }}
+          BILLING_SMTP_PASSWORD: ${{ secrets.BILLING_SMTP_PASSWORD }}
+          BILLING_ALERT_EMAIL_TO: ${{ secrets.BILLING_ALERT_EMAIL_TO }}
+          OCI_USER: ${{ secrets.OCI_USER }}
+          OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_TENANCY: ${{ secrets.OCI_TENANCY }}
+          OCI_REGION: ${{ secrets.OCI_REGION }}
+          OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+          ALIBABA_ACCESS_KEY_ID: ${{ secrets.ALIBABA_ACCESS_KEY_ID }}
+          ALIBABA_ACCESS_KEY_SECRET: ${{ secrets.ALIBABA_ACCESS_KEY_SECRET }}
+          ALIBABA_BILLING_ENDPOINT: ${{ vars.ALIBABA_BILLING_ENDPOINT }}
         run: |
           export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
           bash scripts/bootstrap_vm_keepalive.sh
