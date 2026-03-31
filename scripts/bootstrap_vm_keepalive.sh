@@ -75,10 +75,12 @@ ssh_retry "
     sudo install -m 0600 '$REMOTE_TMP/nemoclaw-billing-monitor.env' /etc/nemoclaw-billing-monitor.env
     sudo install -m 0600 '$REMOTE_TMP/oci_config' /etc/nemoclaw-billing-monitor/oci_config
     sudo install -m 0600 '$REMOTE_TMP/oci_api_key.pem' /etc/nemoclaw-billing-monitor/oci_api_key.pem
-    sudo mkdir -p '$REMOTE_INSTALL_DIR/vendor'
-    sudo python3 -m ensurepip --upgrade >/dev/null 2>&1 || true
-    sudo python3 -m pip install --upgrade pip >/dev/null 2>&1 || true
-    sudo python3 -m pip install --target '$REMOTE_INSTALL_DIR/vendor' oci >/dev/null
+    if [ ! -x '$REMOTE_INSTALL_DIR/billing-venv/bin/python' ]; then
+      sudo python3 -m venv '$REMOTE_INSTALL_DIR/billing-venv'
+    fi
+    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/python' -m ensurepip --upgrade >/dev/null 2>&1 || true
+    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/python' -m pip install --upgrade pip >/dev/null
+    sudo '$REMOTE_INSTALL_DIR/billing-venv/bin/python' -m pip install oci >/dev/null
   fi
   sudo systemctl daemon-reload
   sudo systemctl enable --now lightning-vm-keepalive.service
