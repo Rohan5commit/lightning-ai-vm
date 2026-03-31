@@ -65,7 +65,11 @@ jobs:
       - name: Capture API status only
         if: failure()
         run: |
-          cp vm-snapshot-status.json vm-snapshot.json
+          if [ -f vm-snapshot-status.json ]; then
+            cp vm-snapshot-status.json vm-snapshot.json
+          else
+            printf '{"ok": false, "error": "vm-snapshot-status.json missing"}\n' > vm-snapshot.json
+          fi
           python - <<'PY'
           import json
           data = json.load(open("vm-snapshot.json"))

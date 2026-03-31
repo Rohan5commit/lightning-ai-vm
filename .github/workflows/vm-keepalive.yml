@@ -65,7 +65,11 @@ jobs:
       - name: Capture keepalive snapshot
         if: failure()
         run: |
-          cp vm-keepalive-status.json vm-keepalive-snapshot.json
+          if [ -f vm-keepalive-status.json ]; then
+            cp vm-keepalive-status.json vm-keepalive-snapshot.json
+          else
+            printf '{"ok": false, "error": "vm-keepalive-status.json missing"}\n' > vm-keepalive-snapshot.json
+          fi
           python - <<'PY'
           import json
           data = json.load(open("vm-keepalive-snapshot.json"))

@@ -98,11 +98,36 @@ def studio_id_from_target() -> tuple[str, str]:
     return studio_id, target
 
 
-def resolve_studio(client, project_id: str, studio_id: str):
-    for studio in list_studios(client, project_id):
-        if clean(str(getattr(studio, "id", "") or "")) == studio_id:
+def _studio_sort_key(studio: Any) -> tuple[str, str, str]:
+    return (
+        clean(str(getattr(studio, "updated_at", "") or getattr(studio, "updatedAt", "") or "")),
+        clean(str(getattr(studio, "created_at", "") or getattr(studio, "createdAt", "") or "")),
+        clean(str(getattr(studio, "id", "") or "")),
+    )
+
+
+def resolve_studio(client, project_id: str, studio_hint: str):
+    studios = list_studios(client, project_id)
+    if not studios:
+        return None
+    preferred_name = clean(os.environ.get("LIGHTNING_STUDIO_NAME"))
+    for studio in studios:
+        if clean(str(getattr(studio, "id", "") or "")) == studio_hint:
             return studio
-    return None
+        if studio_hint and studio_hint in {
+            clean(str(getattr(studio, "name", "") or "")),
+            clean(str(getattr(studio, "display_name", "") or getattr(studio, "displayName", "") or "")),
+        }:
+            return studio
+    if preferred_name:
+        for studio in studios:
+            if preferred_name in {
+                clean(str(getattr(studio, "name", "") or "")),
+                clean(str(getattr(studio, "display_name", "") or getattr(studio, "displayName", "") or "")),
+            }:
+                return studio
+    studios.sort(key=_studio_sort_key, reverse=True)
+    return studios[0]
 
 
 def resolve_instance(client, project_id: str, studio_id: str):
@@ -149,10 +174,11 @@ def main() -> None:
 
     ensure_auth_env()
     client, project = get_client_and_project()
-    studio_id, target = studio_id_from_target()
-    studio = resolve_studio(client, project.project_id, studio_id)
+    studio_hint, target = studio_id_from_target()
+    studio = resolve_studio(client, project.project_id, studio_hint)
     if studio is None:
-        raise RuntimeError(f"Studio {studio_id} was not found in Lightning project {project.project_id}.")
+        raise RuntimeError(f"No Lightning Studio was found in project {project.project_id}.")
+    studio_id = clean(str(getattr(studio, "id", "") or "")) or studio_hint
 
     instance = resolve_instance(client, project.project_id, studio_id)
     phase = clean(str(getattr(instance, "phase", "") or ""))
