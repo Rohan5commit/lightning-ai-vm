@@ -13,6 +13,7 @@ import ssl
 import sys
 import traceback
 import urllib.parse
+import urllib.error
 import urllib.request
 import uuid
 from dataclasses import dataclass
@@ -43,7 +44,7 @@ OCI_PROFILE = os.environ.get("OCI_CONFIG_PROFILE", "DEFAULT")
 
 ALIBABA_ACCESS_KEY_ID = os.environ.get("ALIBABA_ACCESS_KEY_ID", "").strip()
 ALIBABA_ACCESS_KEY_SECRET = os.environ.get("ALIBABA_ACCESS_KEY_SECRET", "").strip()
-ALIBABA_ENDPOINT = os.environ.get("ALIBABA_BILLING_ENDPOINT", "business.aliyuncs.com").strip()
+ALIBABA_ENDPOINT = os.environ.get("ALIBABA_BILLING_ENDPOINT", "business.ap-southeast-1.aliyuncs.com").strip()
 
 
 @dataclass
@@ -163,8 +164,12 @@ def alibaba_request(action: str, extra: dict[str, str]) -> dict[str, Any]:
     params.update(extra)
     params["Signature"] = alibaba_signature(params, ALIBABA_ACCESS_KEY_SECRET)
     url = f"https://{ALIBABA_ENDPOINT}/?{urllib.parse.urlencode(params)}"
-    with urllib.request.urlopen(url, timeout=30) as response:
-        return json.load(response)
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            return json.load(response)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Alibaba API HTTP {exc.code}: {body}") from exc
 
 
 def alibaba_item_amount(item: dict[str, Any]) -> float:
