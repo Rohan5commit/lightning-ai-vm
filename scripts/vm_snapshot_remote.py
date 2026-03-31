@@ -39,15 +39,10 @@ payload = {
     "keepalive_service": {
         "active": run(["systemctl", "is-active", "lightning-vm-keepalive.service"]).get("stdout") == "active",
     },
-    "billing_monitor": {
-        "timer_active": run(["systemctl", "is-active", "billing-monitor.timer"]).get("stdout") == "active",
-        "board_active": run(["systemctl", "is-active", "billing-board.service"]).get("stdout") == "active",
-    },
     "keepalive_heartbeat": {
         "timestamp": (slurp_json(base / "heartbeat.json") or {}).get("timestamp"),
         "source": (slurp_json(base / "heartbeat.json") or {}).get("source"),
     },
-    "billing_latest": slurp_json(Path("/var/lib/nemoclaw-billing/latest.json")),
 }
 health = http_json("http://127.0.0.1:38080/healthz")
 if "error" in health:
