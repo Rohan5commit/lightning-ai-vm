@@ -109,12 +109,3 @@ done
 
 export HOME=/home/zeus
 export PATH="$BIN_DIR:$NODE_BIN_DIR:$PATH"
-
-for openclaw_home in \
-  /home/zeus/.openclaw-host \
-  /home/zeus/.openclaw-assistant-host \
-  /home/zeus/.openclaw-assistant2-host
-do
-  export OPENCLAW_HOME="$openclaw_home"
-  openclaw skills list >/dev/null
-done

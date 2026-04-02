@@ -29,8 +29,8 @@ report = {
     "repo_exists": repo_dir.exists(),
     "repo_head": run(["git", "-C", str(repo_dir), "rev-parse", "HEAD"]),
     "import_check": run([str(venv_python), "-c", "import agentlightning; print(agentlightning.__file__)"]),
-    "agl_help": run([str(agl), "--help"]),
-    "agl_store_help": run([str(agl), "store", "--help"]),
+    "agl_help": run(["timeout", "60", str(agl), "--help"]),
+    "agl_store_help": run(["timeout", "60", str(agl), "store", "--help"]),
     "agents": {},
 }
 
@@ -42,7 +42,7 @@ for label, openclaw_home in {
     env = dict(os.environ)
     env["OPENCLAW_HOME"] = openclaw_home
     env["HOME"] = "/home/zeus"
-    skills = run(["openclaw", "skills", "list"], env=env)
+    skills = run(["timeout", "60", "openclaw", "skills", "list"], env=env)
     skill_file = Path(openclaw_home) / ".openclaw" / "extra-skills-curated" / "agent-lightning" / "SKILL.md"
     report["agents"][label] = {
         "skill_file_exists": skill_file.exists(),
