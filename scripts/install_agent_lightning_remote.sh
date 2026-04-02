@@ -17,7 +17,18 @@ else
   git clone --depth=1 https://github.com/microsoft/agent-lightning "$REPO_DIR"
 fi
 
-python3 -m venv "$VENV_DIR"
+ensure_venv() {
+  rm -rf "$VENV_DIR"
+  if python3 -m venv "$VENV_DIR"; then
+    return 0
+  fi
+  sudo apt-get update
+  sudo apt-get install -y python3-venv python3.12-venv || sudo apt-get install -y python3-venv
+  rm -rf "$VENV_DIR"
+  python3 -m venv "$VENV_DIR"
+}
+
+ensure_venv
 "$VENV_DIR/bin/pip" install --upgrade pip setuptools wheel
 "$VENV_DIR/bin/pip" install -e "$REPO_DIR"
 
