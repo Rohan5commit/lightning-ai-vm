@@ -1,0 +1,61 @@
+name: Install Agent Lightning
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: install-agent-lightning
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure SSH key
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' '${{ secrets.LIGHTNING_VM_SSH_KEY }}' > ~/.ssh/lightning_vm_key
+          chmod 600 ~/.ssh/lightning_vm_key
+          ssh-keyscan -H ssh.lightning.ai >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Install Agent Lightning on the VM
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
+          bash scripts/install_agent_lightning.sh
+
+      - name: Smoke test Agent Lightning on all NemoClaws
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
+          bash scripts/test_agent_lightning.sh > agent-lightning-smoke.json
+          python - <<'PY'
+          import json
+          data = json.load(open("agent-lightning-smoke.json"))
+          print(f"repo_exists={data['repo_exists']}")
+          print(f"repo_head={data['repo_head']['stdout']}")
+          print(f"agl_help_rc={data['agl_help']['returncode']}")
+          print(f"agl_store_help_rc={data['agl_store_help']['returncode']}")
+          for label, agent in data["agents"].items():
+              print(
+                  f"{label}: skill_file={agent['skill_file_exists']} "
+                  f"skill_list_contains={agent['skills_list_contains_agent_lightning']}"
+              )
+          PY
+
+      - name: Upload Agent Lightning smoke report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: agent-lightning-smoke
+          path: agent-lightning-smoke.json
+          if-no-files-found: warn
