@@ -43,7 +43,7 @@ for label, openclaw_home in {
     env["OPENCLAW_HOME"] = openclaw_home
     env["HOME"] = "/home/zeus"
     skills = run(["timeout", "60", "openclaw", "skills", "list"], env=env)
-    skill_file = Path(openclaw_home) / ".openclaw" / "extra-skills-curated" / "agent-lightning" / "SKILL.md"
+    skill_file = Path(openclaw_home) / ".openclaw" / "skills" / "agent-lightning" / "SKILL.md"
     report["agents"][label] = {
         "skill_file_exists": skill_file.exists(),
         "skills_list_contains_agent_lightning": "agent-lightning" in skills["stdout"],

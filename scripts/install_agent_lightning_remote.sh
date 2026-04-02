@@ -46,9 +46,16 @@ chmod +x "$BIN_DIR/agent-lightning-python"
 
 create_skill() {
   local openclaw_home="$1"
-  local skill_dir="$openclaw_home/.openclaw/extra-skills-curated/agent-lightning"
+  local skill_dir="$openclaw_home/.openclaw/skills/agent-lightning"
+  rm -rf "$openclaw_home/.openclaw/extra-skills-curated/agent-lightning"
   mkdir -p "$skill_dir"
   cat > "$skill_dir/SKILL.md" <<'MD'
+---
+name: agent-lightning
+description: Inspect, instrument, and train agents with Microsoft Agent Lightning on this VM using the shared repo, Python environment, and agl CLI wrappers.
+user-invocable: false
+---
+
 # Agent Lightning
 
 Use this skill when you need to inspect, instrument, or train agents with Microsoft Agent Lightning on this VM.
