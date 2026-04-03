@@ -1,7 +1,13 @@
 name: VM Keepalive
 
 on:
+  schedule:
+    - cron: "3,13,23,33,43,53 * * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
 
 concurrency:
   group: handoff-vm-keepalive
@@ -59,6 +65,17 @@ jobs:
           data = json.load(open("vm-keepalive-snapshot.json"))
           print(f"keepalive_active={data['keepalive_service']['active']} health_ok={data['nemoclaw_health'].get('ok')} needs_recovery={data['nemoclaw_health'].get('needs_recovery')}")
           PY
+
+      - name: Ensure VM Supervisor is running
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          active_count="$(gh run list -R "$GITHUB_REPOSITORY" --workflow "VM Supervisor" --status in_progress --json databaseId --jq 'length')"
+          echo "vm_supervisor_active_runs=$active_count"
+          if [ "${active_count:-0}" -eq 0 ]; then
+            gh workflow run vm-supervisor.yml -R "$GITHUB_REPOSITORY" -f trigger_source=keepalive-backstop
+            echo "Dispatched VM Supervisor because no active run was found."
+          fi
 
       - name: Capture keepalive snapshot
         if: failure()

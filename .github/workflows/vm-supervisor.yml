@@ -1,0 +1,73 @@
+name: VM Supervisor
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger_source:
+        description: Why this supervisor run was started
+        required: false
+        default: manual
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: handoff-vm-supervisor
+  cancel-in-progress: false
+
+jobs:
+  supervise:
+    runs-on: ubuntu-latest
+    timeout-minutes: 245
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Lightning API client
+        run: |
+          python -m pip install --upgrade pip
+          pip install lightning-app PyYAML
+
+      - name: Configure SSH key
+        env:
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' '${{ secrets.LIGHTNING_VM_SSH_KEY }}' > ~/.ssh/lightning_vm_key
+          chmod 600 ~/.ssh/lightning_vm_key
+          ssh-keyscan -H ssh.lightning.ai >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Run sustained VM supervisor loop
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
+          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+        run: |
+          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
+          chmod +x scripts/run_vm_supervisor_loop.sh
+          bash scripts/run_vm_supervisor_loop.sh
+
+      - name: Dispatch successor supervisor run
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run vm-supervisor.yml -R "$GITHUB_REPOSITORY" -f trigger_source=chain
+          echo "Dispatched successor VM Supervisor run."
+
+      - name: Upload supervisor status
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: vm-supervisor-status
+          path: |
+            vm-supervisor-status.json
+            vm-supervisor-snapshot.json
+          if-no-files-found: warn
