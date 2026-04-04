@@ -50,3 +50,4 @@ Current docs:
 - [docs/2026-03-29-lightning-studio-keepalive.md](docs/2026-03-29-lightning-studio-keepalive.md)
 - [docs/2026-03-30-lightning-nemo-hardening.md](docs/2026-03-30-lightning-nemo-hardening.md)
 - [docs/2026-03-30-vm-repo-correction.md](docs/2026-03-30-vm-repo-correction.md)
+- [docs/2026-04-04-exact-migration-status.md](docs/2026-04-04-exact-migration-status.md)
