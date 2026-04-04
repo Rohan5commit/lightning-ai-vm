@@ -43,10 +43,10 @@ jobs:
         env:
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
-          LIGHTNING_PROJECT_ID: ${{ vars.LIGHTNING_PROJECT_ID }}
-          LIGHTNING_STUDIO_ID: ${{ vars.LIGHTNING_STUDIO_ID }}
-          LIGHTNING_STUDIO_NAME: ${{ vars.LIGHTNING_STUDIO_NAME }}
-          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_PROJECT_ID: ${{ vars.TARGET_LIGHTNING_PROJECT_ID }}
+          LIGHTNING_STUDIO_ID: ${{ vars.TARGET_LIGHTNING_STUDIO_ID }}
+          LIGHTNING_STUDIO_NAME: ${{ vars.TARGET_LIGHTNING_STUDIO_NAME }}
+          LIGHTNING_VM_TARGET: ${{ vars.TARGET_LIGHTNING_VM_TARGET }}
         run: |
           python scripts/lightning_vm_heal.py --restart-if-needed --timeout-seconds 600 --out target-status.json
           python - <<'PY'
@@ -68,14 +68,14 @@ jobs:
         env:
           LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
           SOURCE_LIGHTNING_VM_TARGET: ${{ vars.SOURCE_LIGHTNING_VM_TARGET }}
-          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_TARGET: ${{ vars.TARGET_LIGHTNING_VM_TARGET }}
         run: |
           bash scripts/migrate_nemoclaw_stack.sh
 
       - name: Verify migrated stack on target
         env:
           LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
-          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_TARGET: ${{ vars.TARGET_LIGHTNING_VM_TARGET }}
         run: |
           bash scripts/test_nemoclaw_stack.sh > nemoclaw-stack-smoke.json
           python - <<'PY'
