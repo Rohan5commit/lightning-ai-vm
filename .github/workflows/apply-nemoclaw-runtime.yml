@@ -1,16 +1,16 @@
-name: Migrate NemoClaw Stack
+name: Apply NemoClaw Runtime
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: migrate-nemoclaw-stack
+  group: apply-nemoclaw-runtime
   cancel-in-progress: false
 
 jobs:
-  migrate:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
@@ -23,22 +23,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install lightning-app PyYAML
 
-      - name: Wake or heal source studio
-        env:
-          LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
-          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
-          LIGHTNING_PROJECT_ID: ${{ vars.SOURCE_LIGHTNING_PROJECT_ID }}
-          LIGHTNING_STUDIO_ID: ${{ vars.SOURCE_LIGHTNING_STUDIO_ID }}
-          LIGHTNING_STUDIO_NAME: ${{ vars.SOURCE_LIGHTNING_STUDIO_NAME }}
-          LIGHTNING_VM_TARGET: ${{ vars.SOURCE_LIGHTNING_VM_TARGET }}
-        run: |
-          python scripts/lightning_vm_heal.py --restart-if-needed --timeout-seconds 600 --out source-status.json
-          python - <<'PY'
-          import json
-          data = json.load(open("source-status.json"))
-          print(f"source_studio_id={data['studio_id']} action={data['action']} phase={data['instance_phase']}")
-          PY
-
       - name: Wake or heal target studio
         env:
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
@@ -48,31 +32,25 @@ jobs:
           LIGHTNING_STUDIO_NAME: ${{ vars.TARGET_LIGHTNING_STUDIO_NAME }}
           LIGHTNING_VM_TARGET: ${{ vars.TARGET_LIGHTNING_VM_TARGET }}
         run: |
-          python scripts/lightning_vm_heal.py --restart-if-needed --timeout-seconds 600 --out target-status.json
+          python scripts/lightning_vm_heal.py --restart-if-needed --timeout-seconds 600 --out target-runtime-status.json
           python - <<'PY'
           import json
-          data = json.load(open("target-status.json"))
+          data = json.load(open("target-runtime-status.json"))
           print(f"target_studio_id={data['studio_id']} action={data['action']} phase={data['instance_phase']}")
           PY
 
-      - name: Configure SSH key
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' '${{ secrets.LIGHTNING_VM_SSH_KEY }}' > ~/.ssh/lightning_vm_key
-          chmod 600 ~/.ssh/lightning_vm_key
-          ssh-keyscan -H ssh.lightning.ai >> ~/.ssh/known_hosts 2>/dev/null || true
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Stream exact NemoClaw stack from source to target
+      - name: Refresh target keepalive service
         env:
-          LIGHTNING_VM_SSH_KEY_FILE: ~/.ssh/lightning_vm_key
-          SOURCE_LIGHTNING_VM_TARGET: ${{ vars.SOURCE_LIGHTNING_VM_TARGET }}
+          LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
+          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_PROJECT_ID: ${{ vars.TARGET_LIGHTNING_PROJECT_ID }}
+          LIGHTNING_STUDIO_ID: ${{ vars.TARGET_LIGHTNING_STUDIO_ID }}
           LIGHTNING_VM_TARGET: ${{ vars.TARGET_LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_STATUS_FILE: target-runtime-status.json
         run: |
-          bash scripts/migrate_nemoclaw_stack.sh
+          bash scripts/bootstrap_vm_keepalive.sh
 
-      - name: Apply exact runtime secrets on target
+      - name: Apply exact runtime secrets
         env:
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
@@ -88,9 +66,9 @@ jobs:
           NEMOCLAW_SUPERMEMORY_API_KEY: ${{ secrets.NEMOCLAW_SUPERMEMORY_API_KEY }}
           NEMOCLAW_NEMO_TOKEN: ${{ secrets.NEMOCLAW_NEMO_TOKEN }}
         run: |
-          bash scripts/apply_nemoclaw_runtime_remote.sh
+          bash scripts/apply_nemoclaw_runtime_remote.sh > nemoclaw-runtime-apply.json
 
-      - name: Verify migrated stack on target
+      - name: Smoke test target runtime
         env:
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
@@ -98,27 +76,25 @@ jobs:
           LIGHTNING_STUDIO_ID: ${{ vars.TARGET_LIGHTNING_STUDIO_ID }}
           LIGHTNING_VM_TARGET: ${{ vars.TARGET_LIGHTNING_VM_TARGET }}
         run: |
-          bash scripts/test_nemoclaw_stack_remote.sh > nemoclaw-stack-smoke.json
+          bash scripts/test_nemoclaw_stack_remote.sh > nemoclaw-runtime-smoke.json
           python - <<'PY'
           import json
-          data = json.load(open("nemoclaw-stack-smoke.json"))
+          data = json.load(open("nemoclaw-runtime-smoke.json"))
           print(f"hostname={data['hostname']}")
           print(f"leader_health_ok={data['leader']['health_ok']}")
           print(f"slack_bridge_ok={data['leader']['slack_bridge_ok']}")
           print(f"assistant1_helper_ok={data['assistant1']['browser_helper_ok']}")
           print(f"assistant2_helper_ok={data['assistant2']['browser_helper_ok']}")
           print(f"lightpanda_helper_ok={data['lightpanda']['helper_ok']}")
-          print(f"supermemory_status_rc={data['leader']['supermemory_status']['returncode']}")
-          print(f"agent_lightning_skill={data['leader']['skills']['agent-lightning']}")
           PY
 
-      - name: Upload migration artifacts
+      - name: Upload runtime artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: nemoclaw-migration-artifacts
+          name: nemoclaw-runtime-artifacts
           path: |
-            source-status.json
-            target-status.json
-            nemoclaw-stack-smoke.json
+            target-runtime-status.json
+            nemoclaw-runtime-apply.json
+            nemoclaw-runtime-smoke.json
           if-no-files-found: warn

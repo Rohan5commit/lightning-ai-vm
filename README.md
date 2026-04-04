@@ -17,6 +17,7 @@ Current automation:
 - [.github/workflows/vm-snapshot.yml](.github/workflows/vm-snapshot.yml)
 - [.github/workflows/vm-supervisor.yml](.github/workflows/vm-supervisor.yml)
 - [.github/workflows/migrate-nemoclaw-stack.yml](.github/workflows/migrate-nemoclaw-stack.yml)
+- [.github/workflows/apply-nemoclaw-runtime.yml](.github/workflows/apply-nemoclaw-runtime.yml)
 
 Required repo variables:
 - `LIGHTNING_PROJECT_ID`
@@ -36,6 +37,14 @@ Required repo secrets:
 - `LIGHTNING_USERNAME`
 - `LIGHTNING_API_KEY`
 - `LIGHTNING_VM_SSH_KEY`
+- `NEMOCLAW_SLACK_BOT_TOKEN`
+- `NEMOCLAW_SLACK_APP_TOKEN`
+- `NEMOCLAW_SLACK_VERIFICATION_TOKEN`
+- `NEMOCLAW_NVIDIA_API_KEY_LEADER`
+- `NEMOCLAW_NVIDIA_API_KEY_ASSISTANT1`
+- `NEMOCLAW_NVIDIA_API_KEY_ASSISTANT2`
+- `NEMOCLAW_SUPERMEMORY_API_KEY`
+- `NEMOCLAW_NEMO_TOKEN`
 
 Current docs:
 - [docs/2026-03-29-lightning-studio-keepalive.md](docs/2026-03-29-lightning-studio-keepalive.md)
