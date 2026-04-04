@@ -12,6 +12,7 @@ from typing import Any
 from lightning_app.utilities.cloud import _get_project
 from lightning_app.utilities.network import LightningClient
 from lightning_cloud.openapi import IdCodeconfigBody, IdStartBody, V1UserRequestedComputeConfig
+from lightning_cloud.openapi.rest import ApiException
 
 
 RUNNING_PHASE = "CLOUD_SPACE_INSTANCE_STATE_RUNNING"
@@ -21,6 +22,7 @@ DEFAULT_IDE = "jupyterlab"
 DEFAULT_AUTH_URL = "https://api.lightning.ai"
 DEFAULT_POLL_SECONDS = 5
 DEFAULT_TIMEOUT_SECONDS = 300
+DEFAULT_RESTART_RETRY_SECONDS = 10
 
 
 @dataclass
@@ -156,6 +158,16 @@ def resolve_instance(client, project_id: str, studio_id: str):
     return None
 
 
+def wait_until_running(client, project_id: str, studio_id: str, *, timeout_seconds: int) -> Any:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        instance = resolve_instance(client, project_id, studio_id)
+        if instance is not None and clean(str(getattr(instance, "phase", "") or "")) == RUNNING_PHASE:
+            return instance
+        time.sleep(DEFAULT_POLL_SECONDS)
+    raise TimeoutError(f"Timed out waiting for studio {studio_id} to reach RUNNING.")
+
+
 def ensure_running(client, project_id: str, studio_id: str, *, timeout_seconds: int) -> Any:
     body = IdCodeconfigBody(
         compute_config=V1UserRequestedComputeConfig(
@@ -169,20 +181,22 @@ def ensure_running(client, project_id: str, studio_id: str, *, timeout_seconds: 
         ide=os.environ.get("LIGHTNING_STUDIO_IDE", DEFAULT_IDE),
     )
     update_sleep_config(project_id, studio_id)
-    client.cloud_space_service_update_cloud_space_instance_config(body=body, project_id=project_id, id=studio_id)
-    client.cloud_space_service_start_cloud_space_instance(
-        body=IdStartBody(compute_config=body.compute_config),
-        project_id=project_id,
-        id=studio_id,
-    )
-
     deadline = time.time() + timeout_seconds
     while time.time() < deadline:
-      instance = resolve_instance(client, project_id, studio_id)
-      if instance is not None and clean(str(getattr(instance, "phase", "") or "")) == RUNNING_PHASE:
-          return instance
-      time.sleep(DEFAULT_POLL_SECONDS)
-    raise TimeoutError(f"Timed out waiting for studio {studio_id} to reach RUNNING.")
+        try:
+            client.cloud_space_service_update_cloud_space_instance_config(body=body, project_id=project_id, id=studio_id)
+            client.cloud_space_service_start_cloud_space_instance(
+                body=IdStartBody(compute_config=body.compute_config),
+                project_id=project_id,
+                id=studio_id,
+            )
+            return wait_until_running(client, project_id, studio_id, timeout_seconds=max(15, int(deadline - time.time())))
+        except ApiException as exc:
+            if getattr(exc, "status", None) == 429 or "Please wait 10 seconds before requesting a new machine" in str(exc):
+                time.sleep(DEFAULT_RESTART_RETRY_SECONDS)
+                continue
+            raise
+    raise TimeoutError(f"Timed out waiting to start studio {studio_id}.")
 
 
 def main() -> None:
@@ -205,9 +219,19 @@ def main() -> None:
     action = "noop"
     update_sleep_config(project.project_id, studio_id)
     if args.restart_if_needed and phase != RUNNING_PHASE:
-        instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
-        phase = clean(str(getattr(instance, "phase", "") or ""))
-        action = "started"
+        if instance is not None:
+            try:
+                instance = wait_until_running(client, project.project_id, studio_id, timeout_seconds=min(30, args.timeout_seconds))
+                phase = clean(str(getattr(instance, "phase", "") or ""))
+                action = "waited"
+            except TimeoutError:
+                instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
+                phase = clean(str(getattr(instance, "phase", "") or ""))
+                action = "started"
+        else:
+            instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
+            phase = clean(str(getattr(instance, "phase", "") or ""))
+            action = "started"
 
     payload = asdict(
         HealReport(

@@ -43,7 +43,7 @@ jobs:
           bash scripts/run_vm_supervisor_loop.sh
 
       - name: Dispatch successor supervisor run
-        if: ${{ !cancelled() }}
+        if: ${{ success() && !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
