@@ -36,9 +36,9 @@ Lightning accepted an internal cloudspace fork from the source project into the 
   - reported file count: `294671`
   - reported size: `5863356899` bytes
 - forked target cloudspace
-  - id: `01knbvzmj0ttzzpdndcbz78q82`
-  - name: `rude-teal-op1l`
-  - project: `01knbq8tg7mmn55wf88erpv90b`
+  - id: `01knbwwg5zxek87wqqddqt53ba`
+  - name: `rude-teal-op1l-zkmk`
+  - project: `01kjsr1b8s8zkck9x8t7hdsvgx`
   - reported file count: `294671`
   - reported size: `5863356899` bytes
 
@@ -49,24 +49,33 @@ This fork is the exact stack-preservation layer for:
 - skills, plugins, and local wrappers
 - `.openclaw`, `.nemoclaw`, workspace repos, helper services, and copied credentials that already exist on disk
 
-The empty placeholder target studio `01knbqaeqfkr0j62rvzdxcp0ek` was deleted so the new project now contains only the exact cloned cloudspace.
+The empty placeholder target studio in the non-free project was deleted.
 
-Repo variable state now reflects that fork:
+There is also a free-shell GCP studio in the free-enabled source project:
 
-- `TARGET_LIGHTNING_*` points at `01knbvzmj0ttzzpdndcbz78q82`
-- `LIGHTNING_*` also points at `01knbvzmj0ttzzpdndcbz78q82`
+- shell studio id: `01knbwkkjzs91wetey9ajtt7s6`
+- shell studio name: `applicable-maroon-4zeb`
+- project: `01kjsr1b8s8zkck9x8t7hdsvgx`
+- purpose: active free GCP runtime slot
+
+Current variable layout uses the free GCP path:
+
+- `LIGHTNING_*` points at `applicable-maroon-4zeb`
+- `TARGET_LIGHTNING_*` points at the exact free-project clone `rude-teal-op1l-zkmk`
 - `SOURCE_LIGHTNING_*` still points at the original source studio for provenance
 
 ## Current blocker
 
-The runtime workflows still fail before applying the copied stack because Lightning refuses to start a machine in either the source or the target project:
+The runtime workflows still fail before applying the copied stack because Lightning is returning no active instance for the free shell studio and still refuses to start a machine for the exact clones:
 
 - workflow run: `23975334968`
 - workflow run: `23975568929`
+- workflow run: `23976138391`
 - action: `blocked_insufficient_balance`
 - source studio: `01kmn9avp59m90qykz5c3ta2as`
-- target studio: `01knbvzmj0ttzzpdndcbz78q82`
-- target project: `01knbq8tg7mmn55wf88erpv90b`
+- free shell studio: `01knbwkkjzs91wetey9ajtt7s6`
+- exact free-project clone: `01knbwwg5zxek87wqqddqt53ba`
+- project: `01kjsr1b8s8zkck9x8t7hdsvgx`
 
 ## Strong evidence for the real cause
 
@@ -75,7 +84,7 @@ Lightning reports all of the following at the same time:
 - source project `01kjsr1b8s8zkck9x8t7hdsvgx`
   - membership `free_credits_enabled = True`
   - membership `balance = 0.0`
-- target project `01knbq8tg7mmn55wf88erpv90b`
+- secondary project `01knbq8tg7mmn55wf88erpv90b`
   - membership `free_credits_enabled = False`
   - membership `balance = 0.0`
 
@@ -87,11 +96,13 @@ The stale source-project cloudspaces that were inflating storage were deleted:
 - `01kmd6mh7t65g70ewyb0k528a4` `parameter-golf-t4-check`
 - `01kmnags6t9p4nd3sxvy3w4d24` duplicate zero-size `rude-teal-op1l-wnfj`
 
-After those deletes, Lightning still returns the same machine-start failure:
+After those deletes, Lightning still returns the same machine-start failure for both the original source studio and the exact free-project clone:
 
 - `creating cloud space instance: insufficient balance to start the cloud space`
 
-So the remaining blocker is no longer repo drift or missing runtime secrets. It is Lightning account/project state during machine startup.
+The free shell studio can exist in `CLOUD_SPACE_STATE_READY`, but Lightning can still report zero active instances for it and refuse to create a new one when the keepalive tries to heal it.
+
+So the remaining blocker is no longer repo drift or missing runtime secrets. It is Lightning machine startup/instance state on this account.
 
 ## Operational implication
 

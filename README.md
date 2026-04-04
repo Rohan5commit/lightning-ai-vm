@@ -22,8 +22,8 @@ Current automation:
 
 Current target-state model:
 - `SOURCE_LIGHTNING_*` points at the original source studio
-- `TARGET_LIGHTNING_*` points at the exact forked cloudspace in the new project
-- `LIGHTNING_*` now also points at the exact forked cloudspace in the new project
+- `TARGET_LIGHTNING_*` points at the exact forked cloudspace in the free-enabled source project
+- `LIGHTNING_*` points at the free GCP shell studio used as the active runtime slot
 
 Required repo variables:
 - `LIGHTNING_PROJECT_ID`
