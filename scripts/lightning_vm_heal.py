@@ -17,7 +17,7 @@ from lightning_cloud.openapi.rest import ApiException
 
 RUNNING_PHASE = "CLOUD_SPACE_INSTANCE_STATE_RUNNING"
 DEFAULT_COMPUTE_NAME = "cpu-4"
-DEFAULT_DISK_SIZE_GB = 400
+DEFAULT_DISK_SIZE_GB = 20
 DEFAULT_IDE = "jupyterlab"
 DEFAULT_AUTH_URL = "https://api.lightning.ai"
 DEFAULT_POLL_SECONDS = 5
