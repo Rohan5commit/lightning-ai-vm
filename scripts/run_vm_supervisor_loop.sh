@@ -8,6 +8,20 @@ SUPERVISOR_INTERVAL_SECONDS="${SUPERVISOR_INTERVAL_SECONDS:-240}"
 
 deadline_epoch="$(( $(date +%s) + SUPERVISOR_MINUTES * 60 ))"
 
+validate_snapshot_json() {
+  python - "$1" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+raw = path.read_text(encoding="utf-8").strip()
+if not raw:
+    raise SystemExit(1)
+json.loads(raw)
+PY
+}
+
 bootstrap_once() {
   export LIGHTNING_VM_STATUS_FILE="${LIGHTNING_VM_STATUS_FILE:-vm-supervisor-status.json}"
   bash "$SCRIPT_DIR/bootstrap_vm_keepalive.sh"
@@ -19,6 +33,9 @@ pulse_once() {
   if ! bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json; then
     bootstrap_once
     bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json
+  fi
+  if ! validate_snapshot_json vm-supervisor-snapshot.json; then
+    python "$SCRIPT_DIR/lightning_vm_remote.py" snapshot --status-file vm-supervisor-status.json > vm-supervisor-snapshot.json
   fi
   python - <<'PY'
 import json

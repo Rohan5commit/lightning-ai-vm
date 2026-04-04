@@ -69,7 +69,24 @@ def ensure_auth_env() -> tuple[str, str]:
     if not user_id:
         raise RuntimeError("Lightning user lookup did not return a user id.")
     os.environ["LIGHTNING_USER_ID"] = user_id
+    os.environ["LIGHTNING_AUTH_TOKEN"] = token
     return username, api_key
+
+
+def update_sleep_config(project_id: str, studio_id: str) -> None:
+    token = clean(os.environ.get("LIGHTNING_AUTH_TOKEN"))
+    if not token:
+        raise RuntimeError("Missing LIGHTNING_AUTH_TOKEN after login.")
+    request_json(
+        f"{DEFAULT_AUTH_URL}/v1/projects/{project_id}/cloudspaces/{studio_id}/sleepconfig",
+        method="PUT",
+        headers={"Authorization": f"Bearer {token}"},
+        payload={
+            "disableAutoShutdown": True,
+            "idleShutdownSeconds": 0,
+            "switchToDefaultMachineOnIdle": False,
+        },
+    )
 
 
 def get_client_and_project():
@@ -147,10 +164,11 @@ def ensure_running(client, project_id: str, studio_id: str, *, timeout_seconds: 
             spot=False,
             same_compute_on_resume=False,
         ),
-        disable_auto_shutdown=False,
+        disable_auto_shutdown=True,
         idle_shutdown_seconds=0,
         ide=os.environ.get("LIGHTNING_STUDIO_IDE", DEFAULT_IDE),
     )
+    update_sleep_config(project_id, studio_id)
     client.cloud_space_service_update_cloud_space_instance_config(body=body, project_id=project_id, id=studio_id)
     client.cloud_space_service_start_cloud_space_instance(
         body=IdStartBody(compute_config=body.compute_config),
@@ -185,6 +203,7 @@ def main() -> None:
     instance = resolve_instance(client, project.project_id, studio_id)
     phase = clean(str(getattr(instance, "phase", "") or ""))
     action = "noop"
+    update_sleep_config(project.project_id, studio_id)
     if args.restart_if_needed and phase != RUNNING_PHASE:
         instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
         phase = clean(str(getattr(instance, "phase", "") or ""))
