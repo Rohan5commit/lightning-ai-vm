@@ -33,6 +33,9 @@ jobs:
         env:
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_PROJECT_ID: ${{ vars.LIGHTNING_PROJECT_ID }}
+          LIGHTNING_STUDIO_ID: ${{ vars.LIGHTNING_STUDIO_ID }}
+          LIGHTNING_STUDIO_NAME: ${{ vars.LIGHTNING_STUDIO_NAME }}
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
         run: |
           python scripts/lightning_vm_heal.py --restart-if-needed --out vm-keepalive-status.json
@@ -46,6 +49,8 @@ jobs:
         env:
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_PROJECT_ID: ${{ vars.LIGHTNING_PROJECT_ID }}
+          LIGHTNING_STUDIO_ID: ${{ vars.LIGHTNING_STUDIO_ID }}
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
           LIGHTNING_VM_STATUS_FILE: vm-keepalive-status.json
         run: |

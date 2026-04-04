@@ -37,6 +37,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_PROJECT_ID: ${{ vars.LIGHTNING_PROJECT_ID }}
+          LIGHTNING_STUDIO_ID: ${{ vars.LIGHTNING_STUDIO_ID }}
+          LIGHTNING_STUDIO_NAME: ${{ vars.LIGHTNING_STUDIO_NAME }}
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
         run: |
           chmod +x scripts/run_vm_supervisor_loop.sh

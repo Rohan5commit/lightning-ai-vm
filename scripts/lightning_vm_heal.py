@@ -94,7 +94,7 @@ def update_sleep_config(project_id: str, studio_id: str) -> None:
 
 def get_client_and_project():
     client = LightningClient(retry=False)
-    project = _get_project(client, project_id=None, verbose=False)
+    project = _get_project(client, project_id=clean(os.environ.get("LIGHTNING_PROJECT_ID")) or None, verbose=False)
     return client, project
 
 
