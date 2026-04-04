@@ -1,0 +1,24 @@
+name: Fork Exact NemoClaw Cloudspace
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fork-exact-cloudspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Fork exact cloudspace into target project
+        env:
+          LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
+          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          SOURCE_LIGHTNING_PROJECT_ID: ${{ vars.SOURCE_LIGHTNING_PROJECT_ID }}
+          SOURCE_LIGHTNING_STUDIO_ID: ${{ vars.SOURCE_LIGHTNING_STUDIO_ID }}
+          TARGET_LIGHTNING_PROJECT_ID: ${{ vars.TARGET_LIGHTNING_PROJECT_ID }}
+          TARGET_LIGHTNING_CLUSTER_ID: gcp-lightning-public-prod
+        run: python scripts/fork_exact_cloudspace.py

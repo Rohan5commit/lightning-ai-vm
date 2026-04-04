@@ -16,8 +16,14 @@ Current automation:
 - [.github/workflows/vm-keepalive.yml](.github/workflows/vm-keepalive.yml)
 - [.github/workflows/vm-snapshot.yml](.github/workflows/vm-snapshot.yml)
 - [.github/workflows/vm-supervisor.yml](.github/workflows/vm-supervisor.yml)
+- [.github/workflows/fork-exact-nemoclaw-cloudspace.yml](.github/workflows/fork-exact-nemoclaw-cloudspace.yml)
 - [.github/workflows/migrate-nemoclaw-stack.yml](.github/workflows/migrate-nemoclaw-stack.yml)
 - [.github/workflows/apply-nemoclaw-runtime.yml](.github/workflows/apply-nemoclaw-runtime.yml)
+
+Current target-state model:
+- `SOURCE_LIGHTNING_*` points at the original source studio
+- `TARGET_LIGHTNING_*` points at the exact forked cloudspace in the new project
+- `LIGHTNING_*` now also points at the exact forked cloudspace in the new project
 
 Required repo variables:
 - `LIGHTNING_PROJECT_ID`
