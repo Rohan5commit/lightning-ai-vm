@@ -9,11 +9,13 @@ SUPERVISOR_INTERVAL_SECONDS="${SUPERVISOR_INTERVAL_SECONDS:-240}"
 deadline_epoch="$(( $(date +%s) + SUPERVISOR_MINUTES * 60 ))"
 
 bootstrap_once() {
+  export LIGHTNING_VM_STATUS_FILE="${LIGHTNING_VM_STATUS_FILE:-vm-supervisor-status.json}"
   bash "$SCRIPT_DIR/bootstrap_vm_keepalive.sh"
 }
 
 pulse_once() {
   python "$SCRIPT_DIR/lightning_vm_heal.py" --restart-if-needed --out vm-supervisor-status.json
+  export LIGHTNING_VM_STATUS_FILE=vm-supervisor-status.json
   if ! bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json; then
     bootstrap_once
     bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json
@@ -32,6 +34,8 @@ print(
 PY
 }
 
+python "$SCRIPT_DIR/lightning_vm_heal.py" --restart-if-needed --out vm-supervisor-status.json
+export LIGHTNING_VM_STATUS_FILE=vm-supervisor-status.json
 bootstrap_once
 
 while true; do

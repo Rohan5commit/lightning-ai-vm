@@ -89,12 +89,14 @@ def list_instances(client, project_id: str) -> list[Any]:
 
 
 def studio_id_from_target() -> tuple[str, str]:
-    target = clean(os.environ.get("LIGHTNING_VM_TARGET"))
+    target = clean(os.environ.get("LIGHTNING_STUDIO_ID")) or clean(os.environ.get("LIGHTNING_VM_TARGET"))
     if not target:
-        raise RuntimeError("Missing LIGHTNING_VM_TARGET.")
+        raise RuntimeError("Missing LIGHTNING_STUDIO_ID or LIGHTNING_VM_TARGET.")
     studio_id = target.split("@", 1)[0]
+    if studio_id.startswith("s_"):
+        studio_id = studio_id[2:]
     if not studio_id:
-        raise RuntimeError("Could not parse studio id from LIGHTNING_VM_TARGET.")
+        raise RuntimeError("Could not parse studio id from LIGHTNING_STUDIO_ID/LIGHTNING_VM_TARGET.")
     return studio_id, target
 
 

@@ -38,22 +38,13 @@ jobs:
           print(f"studio_id={data['studio_id']} action={data['action']} phase={data['instance_phase']}")
           PY
 
-      - name: Configure SSH key
-        env:
-          LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' '${{ secrets.LIGHTNING_VM_SSH_KEY }}' > ~/.ssh/lightning_vm_key
-          chmod 600 ~/.ssh/lightning_vm_key
-          ssh-keyscan -H ssh.lightning.ai >> ~/.ssh/known_hosts 2>/dev/null || true
-          chmod 600 ~/.ssh/known_hosts
-
       - name: Capture remote VM snapshot
         env:
+          LIGHTNING_USERNAME: ${{ secrets.LIGHTNING_USERNAME }}
+          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
           LIGHTNING_VM_TARGET: ${{ vars.LIGHTNING_VM_TARGET }}
+          LIGHTNING_VM_STATUS_FILE: vm-snapshot-status.json
         run: |
-          export LIGHTNING_VM_SSH_KEY_FILE="$HOME/.ssh/lightning_vm_key"
           bash scripts/bootstrap_vm_keepalive.sh
           bash scripts/fetch_vm_snapshot.sh > vm-snapshot.json
           python - <<'PY'
