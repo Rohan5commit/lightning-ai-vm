@@ -6,12 +6,16 @@ import json
 import os
 import shlex
 import sys
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
 
 DEFAULT_AUTH_URL = "https://api.lightning.ai"
 DEFAULT_SESSION_NAME = "vm-automation"
+DEFAULT_RETRIES = 6
+DEFAULT_RETRY_DELAY = 3
 
 
 def clean(value: str | None) -> str:
@@ -25,15 +29,32 @@ def request_json(
     headers: dict[str, str] | None = None,
     payload: dict | None = None,
 ) -> dict:
-    request_headers = dict(headers or {})
-    data = None
-    if payload is not None:
-        request_headers["Content-Type"] = "application/json"
-        data = json.dumps(payload).encode("utf-8")
-    request = urllib.request.Request(url, headers=request_headers, data=data, method=method)
-    with urllib.request.urlopen(request) as response:
-        raw = response.read().decode("utf-8", errors="replace")
-    return json.loads(raw) if raw else {}
+    retries = int(os.environ.get("LIGHTNING_VM_API_RETRIES", DEFAULT_RETRIES))
+    retry_delay = int(os.environ.get("LIGHTNING_VM_API_RETRY_DELAY", DEFAULT_RETRY_DELAY))
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            request_headers = dict(headers or {})
+            data = None
+            if payload is not None:
+                request_headers["Content-Type"] = "application/json"
+                data = json.dumps(payload).encode("utf-8")
+            request = urllib.request.Request(url, headers=request_headers, data=data, method=method)
+            with urllib.request.urlopen(request) as response:
+                raw = response.read().decode("utf-8", errors="replace")
+            return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if exc.code not in {429, 500, 502, 503, 504} or attempt >= retries:
+                raise
+        except urllib.error.URLError as exc:
+            last_error = exc
+            if attempt >= retries:
+                raise
+        time.sleep(retry_delay)
+    if last_error:
+        raise last_error
+    return {}
 
 
 def login() -> str:

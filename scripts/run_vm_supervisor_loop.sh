@@ -31,8 +31,12 @@ pulse_once() {
   python "$SCRIPT_DIR/lightning_vm_heal.py" --restart-if-needed --out vm-supervisor-status.json
   export LIGHTNING_VM_STATUS_FILE=vm-supervisor-status.json
   if ! bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json; then
-    bootstrap_once
-    bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json
+    if ! python "$SCRIPT_DIR/lightning_vm_remote.py" snapshot --status-file vm-supervisor-status.json > vm-supervisor-snapshot.json; then
+      bootstrap_once
+      if ! bash "$SCRIPT_DIR/pulse_vm_keepalive.sh" > vm-supervisor-snapshot.json; then
+        python "$SCRIPT_DIR/lightning_vm_remote.py" snapshot --status-file vm-supervisor-status.json > vm-supervisor-snapshot.json
+      fi
+    fi
   fi
   if ! validate_snapshot_json vm-supervisor-snapshot.json; then
     python "$SCRIPT_DIR/lightning_vm_remote.py" snapshot --status-file vm-supervisor-status.json > vm-supervisor-snapshot.json
