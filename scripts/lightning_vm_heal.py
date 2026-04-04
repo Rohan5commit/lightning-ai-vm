@@ -33,6 +33,7 @@ class HealReport:
     studio_found: bool
     instance_found: bool
     instance_phase: str
+    error: str = ""
 
 
 def request_json(url: str, *, method: str = "GET", headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -218,20 +219,29 @@ def main() -> None:
     phase = clean(str(getattr(instance, "phase", "") or ""))
     action = "noop"
     update_sleep_config(project.project_id, studio_id)
-    if args.restart_if_needed and phase != RUNNING_PHASE:
-        if instance is not None:
-            try:
-                instance = wait_until_running(client, project.project_id, studio_id, timeout_seconds=min(30, args.timeout_seconds))
-                phase = clean(str(getattr(instance, "phase", "") or ""))
-                action = "waited"
-            except TimeoutError:
+    error = ""
+    try:
+        if args.restart_if_needed and phase != RUNNING_PHASE:
+            if instance is not None:
+                try:
+                    instance = wait_until_running(client, project.project_id, studio_id, timeout_seconds=min(30, args.timeout_seconds))
+                    phase = clean(str(getattr(instance, "phase", "") or ""))
+                    action = "waited"
+                except TimeoutError:
+                    instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
+                    phase = clean(str(getattr(instance, "phase", "") or ""))
+                    action = "started"
+            else:
                 instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
                 phase = clean(str(getattr(instance, "phase", "") or ""))
                 action = "started"
+    except ApiException as exc:
+        message = clean(str(exc))
+        if "insufficient balance" in message.lower():
+            action = "blocked_insufficient_balance"
+            error = "Lightning refused to start the Studio because the account has insufficient balance for this workload."
         else:
-            instance = ensure_running(client, project.project_id, studio_id, timeout_seconds=args.timeout_seconds)
-            phase = clean(str(getattr(instance, "phase", "") or ""))
-            action = "started"
+            raise
 
     payload = asdict(
         HealReport(
@@ -241,12 +251,15 @@ def main() -> None:
             studio_found=studio is not None,
             instance_found=instance is not None,
             instance_phase=phase or "unknown",
+            error=error,
         )
     )
     text = json.dumps(payload, indent=2)
     print(text)
     if args.out:
         Path(args.out).write_text(text + "\n", encoding="utf-8")
+    if error:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":
